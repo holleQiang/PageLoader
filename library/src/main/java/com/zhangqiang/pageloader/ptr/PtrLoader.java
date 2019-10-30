@@ -45,7 +45,7 @@ public abstract class PtrLoader<T> {
         this.length = this.pageSize = pageSize;
         mPageLoader.setCallback(new com.zhangqiang.pageloader.Callback<T>() {
             @Override
-            public void onLoadNextPageSuccess(T t, T last) {
+            public void onLoadNextPageSuccess(@Nullable T t,@Nullable T last) {
                 if (last == null) {
 
                     pageIndex = 0;
@@ -64,7 +64,7 @@ public abstract class PtrLoader<T> {
             }
 
             @Override
-            public void onLoadNextPageFail(Throwable e, T last) {
+            public void onLoadNextPageFail(Throwable e, @Nullable T last) {
                 if (last == null) {
                     if (callback != null) {
                         callback.onRefreshFail(e);
@@ -77,12 +77,12 @@ public abstract class PtrLoader<T> {
             }
 
             @Override
-            public void onLoadPreviousPageSuccess(T t, T last) {
+            public void onLoadPreviousPageSuccess(T t, @NonNull T last) {
 
             }
 
             @Override
-            public void onLoadPreviousPageFail(Throwable e, T last) {
+            public void onLoadPreviousPageFail(Throwable e, @NonNull T last) {
 
             }
         });

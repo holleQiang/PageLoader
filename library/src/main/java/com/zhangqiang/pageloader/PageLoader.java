@@ -2,7 +2,6 @@ package com.zhangqiang.pageloader;
 
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.util.Log;
 
 import io.reactivex.Observable;
 import io.reactivex.Observer;
@@ -40,32 +39,25 @@ public abstract class PageLoader<T> {
         Observable<T> resultOb = getPreviousPageDataSource(t);
         resultOb.takeUntil(onPreviousLoadSubject)
                 .takeUntil(onNextLoadLoadSubject)
-                .subscribe(new Observer<T>() {
-                    @Override
-                    public void onSubscribe(Disposable d) {
-
-                    }
+                .subscribe(new InnerObserver<T>() {
 
                     @Override
-                    public void onNext(T t) {
+                    protected void onSuccess(@Nullable T t) {
                         final T prev = first;
-                        first = t;
+                        if (t != null) {
+                            first = t;
+                        }
                         if (loadCallback != null) {
                             loadCallback.onLoadPreviousPageSuccess(t, prev);
                         }
-                        Log.i("Test", "====loadPreviousPage=======" + t.toString());
                     }
 
                     @Override
-                    public void onError(Throwable e) {
+                    protected void onFail(Throwable e) {
                         final T prev = first;
                         if (loadCallback != null) {
                             loadCallback.onLoadPreviousPageFail(e, prev);
                         }
-                    }
-
-                    @Override
-                    public void onComplete() {
                     }
                 });
     }
@@ -81,38 +73,66 @@ public abstract class PageLoader<T> {
         getNextPageDataSource(t)
                 .takeUntil(onNextLoadLoadSubject)
                 .takeUntil(onPreviousLoadSubject)
-                .subscribe(new Observer<T>() {
-                    @Override
-                    public void onSubscribe(Disposable d) {
-
-                    }
+                .subscribe(new InnerObserver<T>() {
 
                     @Override
-                    public void onNext(T t) {
+                    protected void onSuccess(@Nullable T t) {
                         final T prev = last;
-                        last = t;
+                        if (t != null) {
+                            last = t;
+                        }
                         if (loadCallback != null) {
                             loadCallback.onLoadNextPageSuccess(t, prev);
                         }
-                        Log.i("Test", "====loadNextPage=======" + t.toString());
                     }
 
                     @Override
-                    public void onError(Throwable e) {
+                    protected void onFail(Throwable e) {
                         final T prev = last;
                         if (loadCallback != null) {
                             loadCallback.onLoadNextPageFail(e, prev);
                         }
                     }
 
-                    @Override
-                    public void onComplete() {
-                    }
                 });
     }
 
 
     public void setCallback(Callback<T> loadCallback) {
         this.loadCallback = loadCallback;
+    }
+
+    private abstract static class InnerObserver<T> implements Observer<T> {
+
+        private boolean isNextCalled;
+
+        @Override
+        public final void onSubscribe(Disposable d) {
+            isNextCalled = false;
+        }
+
+        @Override
+        public final void onNext(T t) {
+            isNextCalled = true;
+            onSuccess(t);
+        }
+
+        protected abstract void onSuccess(@Nullable T t);
+
+        protected abstract void onFail(Throwable e);
+
+        @Override
+        public final void onError(Throwable e) {
+            onFail(e);
+        }
+
+
+        @Override
+        public final void onComplete() {
+            if (isNextCalled) {
+                return;
+            }
+            onSuccess(null);
+        }
     }
 }

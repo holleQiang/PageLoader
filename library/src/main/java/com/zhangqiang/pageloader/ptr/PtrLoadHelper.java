@@ -1,5 +1,7 @@
 package com.zhangqiang.pageloader.ptr;
 
+import android.support.annotation.Nullable;
+
 import com.zhangqiang.pageloader.ptr.loadmore.LoadMoreWidget;
 import com.zhangqiang.pageloader.ptr.refresh.RefreshWidget;
 
@@ -19,7 +21,7 @@ public class PtrLoadHelper<T> implements RefreshWidget.OnRefreshListener, LoadMo
         loadMoreWidget.setOnLoadMoreListener(this);
         Callback<T> callback = new Callback<T>() {
             @Override
-            public void onRefreshSuccess(T t) {
+            public void onRefreshSuccess(@Nullable T t) {
                 refreshing = false;
                 if (mCallback != null) {
                     mCallback.onRefreshSuccess(t);
@@ -37,7 +39,7 @@ public class PtrLoadHelper<T> implements RefreshWidget.OnRefreshListener, LoadMo
             }
 
             @Override
-            public void onLoadMoreSuccess(T t) {
+            public void onLoadMoreSuccess(@Nullable T t) {
                 if (mCallback != null) {
                     mCallback.onLoadMoreSuccess(t);
                 }

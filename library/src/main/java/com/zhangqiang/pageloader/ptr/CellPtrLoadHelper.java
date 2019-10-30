@@ -1,5 +1,7 @@
 package com.zhangqiang.pageloader.ptr;
 
+import android.support.annotation.Nullable;
+
 import com.zhangqiang.celladapter.cell.Cell;
 import com.zhangqiang.celladapter.observable.DataList;
 import com.zhangqiang.pageloader.ptr.loadmore.LoadMoreWidget;
@@ -21,7 +23,7 @@ public class CellPtrLoadHelper<T> extends PtrLoadHelper<T> implements Callback<T
     }
 
     @Override
-    public void onRefreshSuccess(T t) {
+    public void onRefreshSuccess(@Nullable T t) {
         List<Cell> cells = mCellConverter.convertRefreshCell(t);
         if (cells == null || cells.isEmpty()) {
             Cell emptyCell = mCellConverter.convertEmptyCell();
@@ -45,7 +47,7 @@ public class CellPtrLoadHelper<T> extends PtrLoadHelper<T> implements Callback<T
     }
 
     @Override
-    public void onLoadMoreSuccess(T t) {
+    public void onLoadMoreSuccess(@Nullable T t) {
         List<Cell> cells = mCellConverter.convertLoadMoreCell(t);
         if (cells != null && !cells.isEmpty()) {
             mListWidget.addDataListAtLast(cells);
@@ -61,9 +63,9 @@ public class CellPtrLoadHelper<T> extends PtrLoadHelper<T> implements Callback<T
 
     public interface CellConverter<T> {
 
-        List<Cell> convertRefreshCell(T t);
+        List<Cell> convertRefreshCell(@Nullable T t);
 
-        List<Cell> convertLoadMoreCell(T t);
+        List<Cell> convertLoadMoreCell(@Nullable T t);
 
         Cell convertEmptyCell();
 
