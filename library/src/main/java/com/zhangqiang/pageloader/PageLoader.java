@@ -1,5 +1,6 @@
 package com.zhangqiang.pageloader;
 
+import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
@@ -11,89 +12,161 @@ import io.reactivex.subjects.PublishSubject;
 public abstract class PageLoader<T> {
 
     private T first, last;
-    private final PublishSubject<Boolean> onNextLoadLoadSubject = PublishSubject.create();
-    private final PublishSubject<Boolean> onPreviousLoadSubject = PublishSubject.create();
+    private final PublishSubject<Boolean> stopFirstLoadSubject = PublishSubject.create();
+    private final PublishSubject<Boolean> stopNextLoadLoadSubject = PublishSubject.create();
+    private final PublishSubject<Boolean> stopPreviousLoadSubject = PublishSubject.create();
     private Callback<T> loadCallback;
 
-    @NonNull
-    protected abstract Observable<T> getPreviousPageDataSource(@NonNull T t);
 
     @NonNull
-    protected abstract Observable<T> getNextPageDataSource(@Nullable T t);
+    protected abstract Observable<T> getFirstPageDataSource(@Nullable Bundle extra);
+
+    @NonNull
+    protected abstract Observable<T> getPreviousPageDataSource(@NonNull T t,@Nullable Bundle extra);
+
+    @NonNull
+    protected abstract Observable<T> getNextPageDataSource(@NonNull T t,@Nullable Bundle extra);
+
 
     public void reset() {
         first = last = null;
     }
 
-    public void previousPage() {
-        if (first == null) {
-            loadNextPage(null);
-            return;
-        }
-        loadPreviousPage(first);
+    public void loadFirstPage(Bundle extra){
+        reset();
+        loadFirstPageInternal(extra);
     }
 
-    private void loadPreviousPage(T t) {
+    private void loadFirstPageInternal(final Bundle extra){
 
-        onPreviousLoadSubject.onNext(true);
-        Observable<T> resultOb = getPreviousPageDataSource(t);
-        resultOb.takeUntil(onPreviousLoadSubject)
-                .takeUntil(onNextLoadLoadSubject)
-                .subscribe(new InnerObserver<T>() {
+        stopFirstLoadSubject.onNext(true);
+        stopNextLoadLoadSubject.onNext(true);
+        stopPreviousLoadSubject.onNext(true);
+        Observable<T> resultOb = getFirstPageDataSource(extra);
+        resultOb.takeUntil(stopFirstLoadSubject)
+                .takeUntil(stopNextLoadLoadSubject)
+                .takeUntil(stopPreviousLoadSubject)
+                .subscribe(new Observer<T>() {
 
                     @Override
-                    protected void onSuccess(@Nullable T t) {
-                        final T prev = first;
-                        if (t != null) {
-                            first = t;
-                        }
+                    public void onSubscribe(Disposable d) {
+
+                    }
+
+                    @Override
+                    public void onNext(T t) {
+                        first = last = t;
                         if (loadCallback != null) {
-                            loadCallback.onLoadPreviousPageSuccess(t, prev);
+                            loadCallback.onLoadFirstPageSuccess(t,extra);
                         }
                     }
 
                     @Override
-                    protected void onFail(Throwable e) {
-                        final T prev = first;
+                    public void onError(Throwable e) {
                         if (loadCallback != null) {
-                            loadCallback.onLoadPreviousPageFail(e, prev);
+                            loadCallback.onLoadFirstPageFail(e,extra);
+                        }
+                    }
+
+                    @Override
+                    public void onComplete() {
+                        if (loadCallback != null) {
+                            loadCallback.onLoadFirstPageComplete(extra);
+                        }
+                    }
+                });
+    }
+
+    public void loadPreviousPage(Bundle extra) {
+        if (first == null) {
+            return;
+        }
+        loadPreviousPageInternal(first,extra);
+    }
+
+    private void loadPreviousPageInternal(T t, final Bundle extra) {
+
+        stopPreviousLoadSubject.onNext(true);
+        Observable<T> resultOb = getPreviousPageDataSource(t,extra);
+        resultOb.takeUntil(stopPreviousLoadSubject)
+                .takeUntil(stopNextLoadLoadSubject)
+                .takeUntil(stopFirstLoadSubject)
+                .subscribe(new Observer<T>() {
+
+                    @Override
+                    public void onSubscribe(Disposable d) {
+
+                    }
+
+                    @Override
+                    public void onNext(T t) {
+                        first = t;
+                        if (loadCallback != null) {
+                            loadCallback.onLoadPreviousPageSuccess(t,extra);
+                        }
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        if (loadCallback != null) {
+                            loadCallback.onLoadPreviousPageFail(e,extra);
+                        }
+                    }
+
+                    @Override
+                    public void onComplete() {
+                        if (loadCallback != null) {
+                            loadCallback.onLoadPreviousPageComplete(extra);
                         }
                     }
                 });
     }
 
 
-    public void nextPage() {
-        loadNextPage(last);
+    public void loadNextPage(Bundle extra) {
+        if (last == null) {
+            return;
+        }
+        loadNextPageInternal(last,extra);
     }
 
-    private void loadNextPage(final T t) {
+    private void loadNextPageInternal(final T t, final Bundle extra) {
 
-        onNextLoadLoadSubject.onNext(true);
-        getNextPageDataSource(t)
-                .takeUntil(onNextLoadLoadSubject)
-                .takeUntil(onPreviousLoadSubject)
-                .subscribe(new InnerObserver<T>() {
+        stopNextLoadLoadSubject.onNext(true);
+        getNextPageDataSource(t,extra)
+                .takeUntil(stopNextLoadLoadSubject)
+                .takeUntil(stopPreviousLoadSubject)
+                .takeUntil(stopFirstLoadSubject)
+                .subscribe(new Observer<T>() {
 
                     @Override
-                    protected void onSuccess(@Nullable T t) {
+                    public void onSubscribe(Disposable d) {
+
+                    }
+
+                    @Override
+                    public void onNext(T t) {
                         final T prev = last;
-                        if (t != null) {
-                            last = t;
-                        }
+                        last = t;
                         if (loadCallback != null) {
-                            loadCallback.onLoadNextPageSuccess(t, prev);
+                            loadCallback.onLoadNextPageSuccess(t, extra);
                         }
                     }
 
                     @Override
-                    protected void onFail(Throwable e) {
+                    public void onError(Throwable e) {
                         final T prev = last;
                         if (loadCallback != null) {
-                            loadCallback.onLoadNextPageFail(e, prev);
+                            loadCallback.onLoadNextPageFail(e, extra);
                         }
                     }
 
+                    @Override
+                    public void onComplete() {
+                        if (loadCallback != null) {
+                            loadCallback.onLoadNextPageComplete(extra);
+                        }
+                    }
                 });
     }
 
@@ -102,37 +175,25 @@ public abstract class PageLoader<T> {
         this.loadCallback = loadCallback;
     }
 
-    private abstract static class InnerObserver<T> implements Observer<T> {
 
-        private boolean isNextCalled;
+    public interface Callback<T> {
 
-        @Override
-        public final void onSubscribe(Disposable d) {
-            isNextCalled = false;
-        }
+        void onLoadFirstPageSuccess(@NonNull T t, @Nullable Bundle extra);
 
-        @Override
-        public final void onNext(T t) {
-            isNextCalled = true;
-            onSuccess(t);
-        }
+        void onLoadFirstPageFail(Throwable e,@Nullable Bundle extra);
 
-        protected abstract void onSuccess(@Nullable T t);
+        void onLoadFirstPageComplete(@Nullable Bundle extra);
 
-        protected abstract void onFail(Throwable e);
+        void onLoadNextPageSuccess(@NonNull T t,@Nullable Bundle extra);
 
-        @Override
-        public final void onError(Throwable e) {
-            onFail(e);
-        }
+        void onLoadNextPageFail(Throwable e,@Nullable Bundle extra);
 
+        void onLoadNextPageComplete(@Nullable Bundle extra);
 
-        @Override
-        public final void onComplete() {
-            if (isNextCalled) {
-                return;
-            }
-            onSuccess(null);
-        }
+        void onLoadPreviousPageSuccess(@NonNull T t,@Nullable Bundle extra);
+
+        void onLoadPreviousPageFail(Throwable e,@Nullable Bundle extra);
+
+        void onLoadPreviousPageComplete(@Nullable Bundle extra);
     }
 }

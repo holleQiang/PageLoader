@@ -2,19 +2,19 @@ package com.zhangqiang.sample;
 
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 
-import com.zhangqiang.celladapter.CellListAdapter;
 import com.zhangqiang.celladapter.CellRVAdapter;
 import com.zhangqiang.celladapter.cell.Cell;
 import com.zhangqiang.celladapter.cell.MultiCell;
 import com.zhangqiang.celladapter.cell.ViewHolderBinder;
 import com.zhangqiang.celladapter.vh.ViewHolder;
 import com.zhangqiang.pageloader.ptr.CellPtrLoadHelper;
-import com.zhangqiang.pageloader.ptr.PtrLoader;
+import com.zhangqiang.pageloader.ptr.PtrLoadHelper;
 import com.zhangqiang.pageloader.ptr.loadmore.RVLoadMoreWidget;
 import com.zhangqiang.pageloader.ptr.refresh.SwipeRefreshWidget;
 
@@ -36,26 +36,30 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         CellRVAdapter cellRVAdapter = new CellRVAdapter();
         recyclerView.setAdapter(cellRVAdapter);
-        CellPtrLoadHelper<List<String>> ptrLoadHelper = new CellPtrLoadHelper<>(new PtrLoader<List<String>>(10) {
-            @NonNull
-            @Override
-            protected Observable<List<String>> getRefreshDataSource(int pageIndex, int pageSize, int offset, int length) {
-                List<String> strings = new ArrayList<>();
-                for (int i = offset; i < offset + length; i++) {
-                    strings.add(i + "");
-                }
-                return Observable.fromIterable(strings).buffer(strings.size());
-            }
-
-            @NonNull
-            @Override
-            protected Observable<List<String>> getLoadMoreDataSource(@NonNull List<String> strings, int pageIndex, int pageSize, int offset, int length) {
-                return getRefreshDataSource(pageIndex, pageSize, offset, length);
-            }
-        }, new SwipeRefreshWidget(swipeRefreshLayout), new RVLoadMoreWidget(recyclerView), cellRVAdapter,
-                new CellPtrLoadHelper.CellConverter<List<String>>() {
+        CellPtrLoadHelper<List<String>> ptrLoadHelper = new CellPtrLoadHelper<>(10,
+                new SwipeRefreshWidget(swipeRefreshLayout),
+                new RVLoadMoreWidget(recyclerView), cellRVAdapter,
+                new PtrLoadHelper.DataSource<List<String>>() {
+                    @NonNull
                     @Override
-                    public List<Cell> convertRefreshCell(List<String> strings) {
+                    public Observable<List<String>> getRefreshDataSource(int pageIndex, int pageSize, int offset, int length, @Nullable Bundle extra, boolean autoRefresh) {
+
+                        List<String> strings = new ArrayList<>();
+                        for (int i = offset; i < offset + length; i++) {
+                            strings.add(i + "");
+                        }
+                        return Observable.fromIterable(strings).buffer(strings.size());
+                    }
+
+                    @NonNull
+                    @Override
+                    public Observable<List<String>> getLoadMoreDataSource(@NonNull List<String> strings, int pageIndex, int pageSize, int offset, int length, Bundle extra) {
+                        return getRefreshDataSource(pageIndex, pageSize, offset, length, extra, false);
+                    }
+                },
+                new CellPtrLoadHelper.CellProvider<List<String>>() {
+                    @Override
+                    public List<Cell> provideRefreshCell(List<String> strings) {
                         List<Cell> cells = new ArrayList<>();
                         for (String string : strings) {
                             cells.add(new MultiCell<>(R.layout.item_text, string, new ViewHolderBinder<String>() {
@@ -69,17 +73,22 @@ public class MainActivity extends AppCompatActivity {
                     }
 
                     @Override
-                    public List<Cell> convertLoadMoreCell(List<String> strings) {
-                        return convertRefreshCell(strings);
+                    public List<Cell> provideLoadMoreCell(List<String> strings) {
+                        return provideRefreshCell(strings);
                     }
 
                     @Override
-                    public Cell convertEmptyCell() {
+                    public Cell provideLoadingCell() {
                         return null;
                     }
 
                     @Override
-                    public Cell convertRefreshFailCell(Throwable e) {
+                    public Cell provideEmptyCell() {
+                        return null;
+                    }
+
+                    @Override
+                    public Cell provideErrorCell(Throwable e) {
                         return null;
                     }
 
@@ -93,6 +102,6 @@ public class MainActivity extends AppCompatActivity {
 
                     }
                 });
-        ptrLoadHelper.refresh();
+        ptrLoadHelper.autoRefresh(null);
     }
 }
