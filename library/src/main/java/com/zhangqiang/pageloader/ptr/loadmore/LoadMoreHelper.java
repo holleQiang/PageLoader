@@ -12,14 +12,21 @@ import android.util.Log;
  * Email:852286406@qq.com
  * Github:https://github.com/holleQiang
  */
-public abstract class LoadMoreHelper {
+public final class LoadMoreHelper {
 
     private boolean isLoadingMore = false;
     private boolean isLoadMoreEnable = true;
     private RecyclerView mRecyclerView;
+    private Callback mCallback;
+    private final int triggerItemCount;
 
     public LoadMoreHelper(RecyclerView recyclerView) {
+        this(recyclerView, 0);
+    }
+
+    public LoadMoreHelper(RecyclerView recyclerView, int triggerItemCount) {
         mRecyclerView = recyclerView;
+        this.triggerItemCount = triggerItemCount;
         recyclerView.addOnScrollListener(new LoadMoreHelper.InternalScrollerListener());
     }
 
@@ -45,7 +52,7 @@ public abstract class LoadMoreHelper {
         public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
             super.onScrolled(recyclerView, dx, dy);
 
-            if (isLoadingMore || !isLoadMoreEnable ) {
+            if (isLoadingMore || !isLoadMoreEnable) {
                 return;
             }
 
@@ -60,9 +67,9 @@ public abstract class LoadMoreHelper {
             }
             int lastVisibleItem = findLastVisibleItem(layoutManager);
 
-            if (mLastPosition != lastVisibleItem && totalItemCount - 1 == lastVisibleItem) {
+            if (mLastPosition != lastVisibleItem && totalItemCount - 1 - triggerItemCount == lastVisibleItem) {
 
-                Log.i("Test","=========post=========" + mLastPosition);
+                Log.i("Test", "=========post=========" + mLastPosition);
                 isLoadingMore = true;
                 recyclerView.removeCallbacks(loadMoreRunnable);
                 recyclerView.post(loadMoreRunnable);
@@ -106,14 +113,22 @@ public abstract class LoadMoreHelper {
         mRecyclerView.removeCallbacks(loadMoreRunnable);
     }
 
-    protected abstract void onLoadMore();
-
     private Runnable loadMoreRunnable = new Runnable() {
         @Override
         public void run() {
 
-            onLoadMore();
+            if (mCallback != null) {
+                mCallback.onLoadMore();
+            }
         }
     };
 
+    public interface Callback {
+
+        void onLoadMore();
+    }
+
+    public void setCallback(Callback callback) {
+        this.mCallback = callback;
+    }
 }

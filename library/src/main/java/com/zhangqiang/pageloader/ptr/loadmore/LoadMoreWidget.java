@@ -40,9 +40,14 @@ public abstract class LoadMoreWidget {
         void onLoadMore();
     }
 
-    protected void notifyLoadMore(){
+    protected final void notifyLoadMore(){
+        onLoadMore();
         if (onLoadMoreListener != null) {
             onLoadMoreListener.onLoadMore();
         }
+    }
+
+    protected void onLoadMore(){
+
     }
 }

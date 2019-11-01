@@ -11,7 +11,7 @@ public abstract class RefreshWidget {
         this.mOnRefreshListener = onRefreshListener;
     }
 
-    public void setRefreshComplete(){
+    public void setRefreshComplete() {
         onRefreshComplete();
     }
 
@@ -30,21 +30,26 @@ public abstract class RefreshWidget {
     }
 
 
-    public void setRefreshError(Throwable e){
+    public void setRefreshError(Throwable e) {
         onRefreshError(e);
         onRefreshComplete();
     }
 
 
-    public interface OnRefreshListener{
+    public interface OnRefreshListener {
 
         void onRefresh();
     }
 
-    protected void notifyRefresh(){
+    protected final void notifyRefresh() {
+        onRefresh();
         if (mOnRefreshListener != null) {
             mOnRefreshListener.onRefresh();
         }
+    }
+
+    protected void onRefresh() {
+
     }
 
 }

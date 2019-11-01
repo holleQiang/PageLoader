@@ -6,13 +6,14 @@ public class RVLoadMoreWidget extends LoadMoreWidget {
 
     private LoadMoreHelper loadMoreHelper;
 
-    public RVLoadMoreWidget(RecyclerView recyclerView) {
-        loadMoreHelper = new LoadMoreHelper(recyclerView) {
+    public RVLoadMoreWidget(RecyclerView recyclerView, int triggerItemCount) {
+        loadMoreHelper = new LoadMoreHelper(recyclerView, triggerItemCount);
+        loadMoreHelper.setCallback(new LoadMoreHelper.Callback() {
             @Override
-            protected void onLoadMore() {
+            public void onLoadMore() {
                 notifyLoadMore();
             }
-        };
+        });
     }
 
     @Override
