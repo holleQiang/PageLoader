@@ -9,7 +9,7 @@ import com.zhangqiang.pageloader.ptr.refresh.RefreshWidget;
 
 import io.reactivex.Observable;
 
-public class PtrLoadHelper<T> implements RefreshWidget.OnRefreshListener, LoadMoreWidget.OnLoadMoreListener {
+public final class PtrLoadHelper<T> implements RefreshWidget.OnRefreshListener, LoadMoreWidget.OnLoadMoreListener {
 
     private PtrLoader<T> pageLoader;
     private RefreshWidget refreshWidget;

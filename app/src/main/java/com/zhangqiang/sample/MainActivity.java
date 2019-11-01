@@ -1,6 +1,8 @@
 package com.zhangqiang.sample;
 
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -13,15 +15,18 @@ import com.zhangqiang.celladapter.cell.Cell;
 import com.zhangqiang.celladapter.cell.MultiCell;
 import com.zhangqiang.celladapter.cell.ViewHolderBinder;
 import com.zhangqiang.celladapter.vh.ViewHolder;
-import com.zhangqiang.pageloader.ptr.CellPtrLoadHelper;
+import com.zhangqiang.pageloader.ptr.PtrCellCallback;
 import com.zhangqiang.pageloader.ptr.PtrLoadHelper;
 import com.zhangqiang.pageloader.ptr.loadmore.RVLoadMoreWidget;
 import com.zhangqiang.pageloader.ptr.refresh.SwipeRefreshWidget;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import io.reactivex.Observable;
+import io.reactivex.Scheduler;
+import io.reactivex.disposables.Disposable;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -36,9 +41,9 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         CellRVAdapter cellRVAdapter = new CellRVAdapter();
         recyclerView.setAdapter(cellRVAdapter);
-        CellPtrLoadHelper<List<String>> ptrLoadHelper = new CellPtrLoadHelper<>(10,
+        PtrLoadHelper<List<String>> ptrLoadHelper = new PtrLoadHelper<>(10,
                 new SwipeRefreshWidget(swipeRefreshLayout),
-                new RVLoadMoreWidget(recyclerView), cellRVAdapter,
+                new RVLoadMoreWidget(recyclerView),
                 new PtrLoadHelper.DataSource<List<String>>() {
                     @NonNull
                     @Override
@@ -48,7 +53,39 @@ public class MainActivity extends AppCompatActivity {
                         for (int i = offset; i < offset + length; i++) {
                             strings.add(i + "");
                         }
-                        return Observable.fromIterable(strings).buffer(strings.size());
+                        return Observable.fromIterable(strings).buffer(strings.size()).delay(1, TimeUnit.SECONDS).observeOn(new Scheduler() {
+                            @Override
+                            public Worker createWorker() {
+                                return new Worker() {
+                                    @Override
+                                    public Disposable schedule(final Runnable run, long delay, TimeUnit unit) {
+                                        final Handler handler = new Handler(Looper.getMainLooper());
+                                        handler.post(run);
+                                        return new Disposable() {
+                                            @Override
+                                            public void dispose() {
+                                                handler.removeCallbacks(run);
+                                            }
+
+                                            @Override
+                                            public boolean isDisposed() {
+                                                return false;
+                                            }
+                                        };
+                                    }
+
+                                    @Override
+                                    public void dispose() {
+
+                                    }
+
+                                    @Override
+                                    public boolean isDisposed() {
+                                        return false;
+                                    }
+                                };
+                            }
+                        });
                     }
 
                     @NonNull
@@ -56,52 +93,42 @@ public class MainActivity extends AppCompatActivity {
                     public Observable<List<String>> getLoadMoreDataSource(@NonNull List<String> strings, int pageIndex, int pageSize, int offset, int length, Bundle extra) {
                         return getRefreshDataSource(pageIndex, pageSize, offset, length, extra, false);
                     }
-                },
-                new CellPtrLoadHelper.CellProvider<List<String>>() {
-                    @Override
-                    public List<Cell> provideRefreshCell(List<String> strings) {
-                        List<Cell> cells = new ArrayList<>();
-                        for (String string : strings) {
-                            cells.add(new MultiCell<>(R.layout.item_text, string, new ViewHolderBinder<String>() {
-                                @Override
-                                public void onBind(ViewHolder viewHolder, String s) {
-                                    viewHolder.setText(R.id.tv_title, s);
-                                }
-                            }));
-                        }
-                        return cells;
-                    }
-
-                    @Override
-                    public List<Cell> provideLoadMoreCell(List<String> strings) {
-                        return provideRefreshCell(strings);
-                    }
-
-                    @Override
-                    public Cell provideLoadingCell() {
-                        return null;
-                    }
-
-                    @Override
-                    public Cell provideEmptyCell() {
-                        return null;
-                    }
-
-                    @Override
-                    public Cell provideErrorCell(Throwable e) {
-                        return null;
-                    }
-
-                    @Override
-                    public void onRefreshError(Throwable e) {
-
-                    }
-
-                    @Override
-                    public void onLoadMoreError(Throwable e) {
-
-                    }
                 });
+        ptrLoadHelper.setCallback(new PtrCellCallback<List<String>>(cellRVAdapter) {
+            @Override
+            protected List<Cell> provideRefreshCell(@NonNull List<String> strings) {
+                List<Cell> cells = new ArrayList<>();
+                for (String string : strings) {
+                    cells.add(new MultiCell<>(R.layout.item_text, string, new ViewHolderBinder<String>() {
+                        @Override
+                        public void onBind(ViewHolder viewHolder, String s) {
+                            viewHolder.setText(R.id.tv_title, s);
+                        }
+                    }));
+                }
+                return cells;
+            }
+
+            @Override
+            protected List<Cell> provideLoadMoreCell(@NonNull List<String> strings) {
+                return provideRefreshCell(strings);
+            }
+
+            @Override
+            protected Cell provideLoadingCell() {
+                return new MultiCell<>(R.layout.item_loading,"",null);
+            }
+
+            @Override
+            protected Cell provideEmptyCell() {
+                return null;
+            }
+
+            @Override
+            protected Cell provideErrorCell(Throwable e) {
+                return null;
+            }
+        });
         ptrLoadHelper.autoRefresh(null);
     }
 }

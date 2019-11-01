@@ -6,29 +6,22 @@ import android.support.annotation.Nullable;
 
 import com.zhangqiang.celladapter.cell.Cell;
 import com.zhangqiang.celladapter.observable.DataList;
-import com.zhangqiang.pageloader.ptr.loadmore.LoadMoreWidget;
-import com.zhangqiang.pageloader.ptr.refresh.RefreshWidget;
 
 import java.util.Collections;
 import java.util.List;
 
-public class CellPtrLoadHelper<T> extends PtrLoadHelper<T> implements PtrLoadHelper.Callback<T> {
+public abstract class PtrCellCallback<T> implements PtrLoadHelper.Callback<T> {
 
     private DataList<Cell> mListWidget;
-    private CellProvider<T> mCellProvider;
 
-    public CellPtrLoadHelper(int pageSize, RefreshWidget refreshWidget, LoadMoreWidget loadMoreWidget, DataList<Cell> listWidget, DataSource<T> dataSource, CellProvider<T> cellProvider) {
-        super(pageSize, refreshWidget, loadMoreWidget, dataSource);
-        this.mListWidget = listWidget;
-        this.mCellProvider = cellProvider;
-        setCallback(this);
+    public PtrCellCallback(DataList<Cell> mListWidget) {
+        this.mListWidget = mListWidget;
     }
-
 
     @Override
     public void onRefreshStart(@Nullable Bundle extra, boolean autoRefresh) {
         if (autoRefresh) {
-            Cell loadingCell = mCellProvider.provideLoadingCell();
+            Cell loadingCell = provideLoadingCell();
             if (loadingCell != null && mListWidget.isEmpty()) {
                 mListWidget.setDataList(Collections.singletonList(loadingCell));
             }
@@ -37,9 +30,9 @@ public class CellPtrLoadHelper<T> extends PtrLoadHelper<T> implements PtrLoadHel
 
     @Override
     public void onRefreshSuccess(@NonNull T t, @Nullable Bundle extra, boolean autoRefresh) {
-        List<Cell> cells = mCellProvider.provideRefreshCell(t);
+        List<Cell> cells = provideRefreshCell(t);
         if (cells == null || cells.isEmpty()) {
-            Cell emptyCell = mCellProvider.provideEmptyCell();
+            Cell emptyCell = provideEmptyCell();
             if (emptyCell != null) {
                 cells = Collections.singletonList(emptyCell);
             }
@@ -50,13 +43,11 @@ public class CellPtrLoadHelper<T> extends PtrLoadHelper<T> implements PtrLoadHel
     @Override
     public void onRefreshFail(Throwable e, @Nullable Bundle extra, boolean autoRefresh) {
         if (mListWidget.isEmpty()) {
-            Cell failCell = mCellProvider.provideErrorCell(e);
+            Cell failCell = provideErrorCell(e);
             if (failCell != null) {
                 mListWidget.setDataList(Collections.singletonList(failCell));
-                return;
             }
         }
-        mCellProvider.onRefreshError(e);
     }
 
     @Override
@@ -70,8 +61,8 @@ public class CellPtrLoadHelper<T> extends PtrLoadHelper<T> implements PtrLoadHel
     }
 
     @Override
-    public void onLoadMoreSuccess(@Nullable T t, Bundle extra) {
-        List<Cell> cells = mCellProvider.provideLoadMoreCell(t);
+    public void onLoadMoreSuccess(@NonNull T t, Bundle extra) {
+        List<Cell> cells = provideLoadMoreCell(t);
         if (cells != null && !cells.isEmpty()) {
             mListWidget.addDataListAtLast(cells);
         }
@@ -79,9 +70,7 @@ public class CellPtrLoadHelper<T> extends PtrLoadHelper<T> implements PtrLoadHel
 
     @Override
     public void onLoadMoreFail(Throwable e, Bundle extra) {
-        if (mCellProvider != null) {
-            mCellProvider.onLoadMoreError(e);
-        }
+
     }
 
     @Override
@@ -89,22 +78,15 @@ public class CellPtrLoadHelper<T> extends PtrLoadHelper<T> implements PtrLoadHel
 
     }
 
-    public interface CellProvider<T> {
 
-        List<Cell> provideRefreshCell(@NonNull T t);
+    protected abstract List<Cell> provideRefreshCell(@NonNull T t);
 
-        List<Cell> provideLoadMoreCell(@NonNull T t);
+    protected abstract List<Cell> provideLoadMoreCell(@NonNull T t);
 
-        Cell provideLoadingCell();
+    protected abstract Cell provideLoadingCell();
 
-        Cell provideEmptyCell();
+    protected abstract Cell provideEmptyCell();
 
-        Cell provideErrorCell(Throwable e);
-
-        void onRefreshError(Throwable e);
-
-        void onLoadMoreError(Throwable e);
-    }
-
+    protected abstract Cell provideErrorCell(Throwable e);
 
 }
