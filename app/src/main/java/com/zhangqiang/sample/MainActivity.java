@@ -43,7 +43,7 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setAdapter(cellRVAdapter);
         PtrLoadHelper<List<String>> ptrLoadHelper = new PtrLoadHelper<>(10,
                 new SwipeRefreshWidget(swipeRefreshLayout),
-                new RVLoadMoreWidget(recyclerView),
+                new RVLoadMoreWidget(recyclerView,1),
                 new PtrLoadHelper.DataSource<List<String>>() {
                     @NonNull
                     @Override
