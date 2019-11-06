@@ -49,6 +49,13 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public Observable<List<String>> getRefreshDataSource(int pageIndex, int pageSize, int offset, int length, @Nullable Bundle extra, boolean autoRefresh) {
 
+                        int result = ((int) (Math.random() * 10)) % 3;
+                        if (result == 0) {
+                            return Observable.error(new RuntimeException());
+                        }else if(result == 1){
+                            return Observable.empty();
+                        }
+
                         List<String> strings = new ArrayList<>();
                         for (int i = offset; i < offset + length; i++) {
                             strings.add(i + "");
@@ -121,12 +128,12 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             protected Cell provideEmptyCell() {
-                return null;
+                return new MultiCell<>(R.layout.item_empty,"",null);
             }
 
             @Override
             protected Cell provideErrorCell(Throwable e) {
-                return null;
+                return new MultiCell<>(R.layout.item_load_error,"",null);
             }
         });
         ptrLoadHelper.autoRefresh(null);

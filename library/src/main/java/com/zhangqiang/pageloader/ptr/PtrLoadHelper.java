@@ -127,6 +127,10 @@ public final class PtrLoadHelper<T> implements RefreshWidget.OnRefreshListener, 
         refreshInternal(extra, true);
     }
 
+    public void autoRefresh() {
+        autoRefresh(null);
+    }
+
     private void refreshInternal(Bundle extra, boolean autoRefresh) {
         Bundle extraInner;
         if (extra != null) {
@@ -135,9 +139,6 @@ public final class PtrLoadHelper<T> implements RefreshWidget.OnRefreshListener, 
             extraInner = new Bundle();
         }
         extraInner.putBoolean(EXTRA_KEY_AUTO_REFRESH, autoRefresh);
-        if (mCallback != null) {
-            mCallback.onRefreshStart(extraInner,autoRefresh);
-        }
         pageLoader.refresh(extraInner);
     }
 

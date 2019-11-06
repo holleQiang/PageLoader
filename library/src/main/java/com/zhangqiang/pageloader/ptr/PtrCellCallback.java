@@ -13,6 +13,9 @@ import java.util.List;
 public abstract class PtrCellCallback<T> implements PtrLoadHelper.Callback<T> {
 
     private DataList<Cell> mListWidget;
+    private Cell tempLoadingCell;
+    private Cell tempErrorCell;
+    private Cell tempEmptyCell;
 
     public PtrCellCallback(DataList<Cell> mListWidget) {
         this.mListWidget = mListWidget;
@@ -20,9 +23,11 @@ public abstract class PtrCellCallback<T> implements PtrLoadHelper.Callback<T> {
 
     @Override
     public void onRefreshStart(@Nullable Bundle extra, boolean autoRefresh) {
+        clearTempCell();
         if (autoRefresh) {
             Cell loadingCell = provideLoadingCell();
-            if (loadingCell != null && mListWidget.isEmpty()) {
+            if (loadingCell != null) {
+                tempLoadingCell = loadingCell;
                 mListWidget.setDataList(Collections.singletonList(loadingCell));
             }
         }
@@ -31,28 +36,31 @@ public abstract class PtrCellCallback<T> implements PtrLoadHelper.Callback<T> {
     @Override
     public void onRefreshSuccess(@NonNull T t, @Nullable Bundle extra, boolean autoRefresh) {
         List<Cell> cells = provideRefreshCell(t);
-        if (cells == null || cells.isEmpty()) {
-            Cell emptyCell = provideEmptyCell();
-            if (emptyCell != null) {
-                cells = Collections.singletonList(emptyCell);
-            }
-        }
         mListWidget.setDataList(cells);
     }
 
     @Override
     public void onRefreshFail(Throwable e, @Nullable Bundle extra, boolean autoRefresh) {
+        clearTempCell();
         if (mListWidget.isEmpty()) {
-            Cell failCell = provideErrorCell(e);
-            if (failCell != null) {
-                mListWidget.setDataList(Collections.singletonList(failCell));
+            Cell errorCell = provideErrorCell(e);
+            if (errorCell != null) {
+                tempErrorCell = errorCell;
+                mListWidget.setDataList(Collections.singletonList(errorCell));
             }
         }
     }
 
     @Override
     public void onRefreshComplete(@Nullable Bundle extra, boolean autoRefresh) {
-
+        clearTempCell();
+        if (mListWidget.isEmpty()) {
+            Cell emptyCell = provideEmptyCell();
+            if (emptyCell != null) {
+                tempEmptyCell = emptyCell;
+                mListWidget.setDataList(Collections.singletonList(emptyCell));
+            }
+        }
     }
 
     @Override
@@ -89,4 +97,12 @@ public abstract class PtrCellCallback<T> implements PtrLoadHelper.Callback<T> {
 
     protected abstract Cell provideErrorCell(Throwable e);
 
+    private void clearTempCell() {
+        mListWidget.removeData(tempLoadingCell);
+        mListWidget.removeData(tempEmptyCell);
+        mListWidget.removeData(tempErrorCell);
+        tempLoadingCell = null;
+        tempEmptyCell = null;
+        tempErrorCell = null;
+    }
 }
