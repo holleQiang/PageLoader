@@ -9,6 +9,8 @@ import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
+import android.view.View;
 
 import com.zhangqiang.celladapter.CellRVAdapter;
 import com.zhangqiang.celladapter.cell.Cell;
@@ -43,18 +45,18 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setAdapter(cellRVAdapter);
         PtrLoadHelper<List<String>> ptrLoadHelper = new PtrLoadHelper<>(10,
                 new SwipeRefreshWidget(swipeRefreshLayout),
-                new RVLoadMoreWidget(recyclerView,1),
+                new RVLoadMoreWidget(recyclerView, 1),
                 new PtrLoadHelper.DataSource<List<String>>() {
                     @NonNull
                     @Override
                     public Observable<List<String>> getRefreshDataSource(int pageIndex, int pageSize, int offset, int length, @Nullable Bundle extra, boolean autoRefresh) {
-
-                        int result = ((int) (Math.random() * 10)) % 3;
-                        if (result == 0) {
-                            return Observable.error(new RuntimeException());
-                        }else if(result == 1){
-                            return Observable.empty();
-                        }
+//
+//                        int result = ((int) (Math.random() * 10)) % 3;
+//                        if (result == 0) {
+//                            return Observable.error(new RuntimeException());
+//                        }else if(result == 1){
+//                            return Observable.empty();
+//                        }
 
                         List<String> strings = new ArrayList<>();
                         for (int i = offset; i < offset + length; i++) {
@@ -106,12 +108,8 @@ public class MainActivity extends AppCompatActivity {
             protected List<Cell> provideRefreshCell(@NonNull List<String> strings) {
                 List<Cell> cells = new ArrayList<>();
                 for (String string : strings) {
-                    cells.add(new MultiCell<>(R.layout.item_text, string, new ViewHolderBinder<String>() {
-                        @Override
-                        public void onBind(ViewHolder viewHolder, String s) {
-                            viewHolder.setText(R.id.tv_title, s);
-                        }
-                    }));
+
+                    cells.add(new MultiCell<>(R.layout.item_text, string, viewHolderBinder));
                 }
                 return cells;
             }
@@ -123,19 +121,50 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             protected Cell provideLoadingCell() {
-                return new MultiCell<>(R.layout.item_loading,"",null);
+                return new MultiCell<>(R.layout.item_loading, "", viewHolderBinder);
             }
 
             @Override
             protected Cell provideEmptyCell() {
-                return new MultiCell<>(R.layout.item_empty,"",null);
+                return new MultiCell<>(R.layout.item_empty, "", viewHolderBinder);
             }
 
             @Override
             protected Cell provideErrorCell(Throwable e) {
-                return new MultiCell<>(R.layout.item_load_error,"",null);
+                return new MultiCell<>(R.layout.item_load_error, "", viewHolderBinder);
             }
         });
-        ptrLoadHelper.autoRefresh(null);
+        ptrLoadHelper.autoRefresh();
     }
+
+    ViewHolderBinder<String> viewHolderBinder = new ViewHolderBinder<String>() {
+        @Override
+        public void onBind(ViewHolder viewHolder, String s) {
+            try{
+                viewHolder.setText(R.id.tv_title, s);
+
+            }catch (Throwable e){
+
+            }
+            View view = viewHolder.getView();
+            View.OnAttachStateChangeListener listener = (View.OnAttachStateChangeListener) view.getTag(R.id.key_attach_listener);
+            if (listener != null) {
+                view.removeOnAttachStateChangeListener(listener);
+            }
+            listener = new View.OnAttachStateChangeListener() {
+
+                @Override
+                public void onViewAttachedToWindow(View v) {
+                    Log.i("Test", "=======onViewAttachedToWindow=========" + v);
+                }
+
+                @Override
+                public void onViewDetachedFromWindow(View v) {
+                    Log.i("Test", "======onViewDetachedFromWindow==========" + v);
+                }
+            };
+            view.setTag(R.id.key_attach_listener, listener);
+            view.addOnAttachStateChangeListener(listener);
+        }
+    };
 }
