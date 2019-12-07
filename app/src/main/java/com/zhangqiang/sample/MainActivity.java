@@ -116,7 +116,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             protected List<Cell> provideLoadMoreCell(@NonNull List<String> strings) {
-                return provideRefreshCell(strings);
+                return provideRefreshCell(strings).subList(0,1);
             }
 
             @Override

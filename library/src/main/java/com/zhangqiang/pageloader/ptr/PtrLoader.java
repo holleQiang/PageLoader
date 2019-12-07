@@ -49,6 +49,13 @@ public abstract class PtrLoader<T> {
         this.length = this.pageSize = pageSize;
         mPageLoader.setCallback(new PageLoader.Callback<T>() {
             @Override
+            public void onLoadFirstPageStart(@Nullable Bundle extra) {
+                if (callback != null) {
+                    callback.onRefreshStart(extra);
+                }
+            }
+
+            @Override
             public void onLoadFirstPageSuccess(@NonNull T t, @Nullable Bundle extra) {
                 pageIndex = 0;
                 offset = 0;
@@ -68,6 +75,13 @@ public abstract class PtrLoader<T> {
             public void onLoadFirstPageComplete(@Nullable Bundle extra) {
                 if (callback != null) {
                     callback.onRefreshComplete(extra);
+                }
+            }
+
+            @Override
+            public void onLoadNextPageStart(@Nullable Bundle extra) {
+                if (callback != null) {
+                    callback.onLoadMoreStart(extra);
                 }
             }
 
@@ -95,6 +109,11 @@ public abstract class PtrLoader<T> {
             }
 
             @Override
+            public void onLoadPreviousPageStart(@Nullable Bundle extra) {
+
+            }
+
+            @Override
             public void onLoadPreviousPageSuccess(@NonNull T t, @Nullable Bundle extra) {
 
             }
@@ -113,18 +132,12 @@ public abstract class PtrLoader<T> {
     }
 
     public void refresh(Bundle extra) {
-        if (callback != null) {
-            callback.onRefreshStart(extra);
-        }
         mPageLoader.reset();
         mPageLoader.loadFirstPage(extra);
     }
 
 
     public void loadMore(Bundle extra) {
-        if (callback != null) {
-            callback.onLoadMoreStart(extra);
-        }
         mPageLoader.loadNextPage(extra);
     }
 

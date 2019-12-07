@@ -61,13 +61,9 @@ public final class LoadMoreHelper {
                 return;
             }
             int totalItemCount = layoutManager.getItemCount();
-            int visibleItemCount = layoutManager.getChildCount();
-            if (totalItemCount <= visibleItemCount) {
-                return;
-            }
             int lastVisibleItem = findLastVisibleItem(layoutManager);
 
-            if (mLastPosition != lastVisibleItem && totalItemCount - 1 - triggerItemCount == lastVisibleItem) {
+            if (mLastPosition != lastVisibleItem && totalItemCount - 1 - lastVisibleItem <= triggerItemCount) {
 
                 Log.i("Test", "=========post=========" + mLastPosition);
                 isLoadingMore = true;

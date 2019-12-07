@@ -34,6 +34,9 @@ public abstract class PageLoader<T> {
 
     public void loadFirstPage(Bundle extra){
         reset();
+        if (loadCallback != null) {
+            loadCallback.onLoadFirstPageStart(extra);
+        }
         loadFirstPageInternal(extra);
     }
 
@@ -81,6 +84,9 @@ public abstract class PageLoader<T> {
         if (first == null) {
             return;
         }
+        if (loadCallback != null) {
+            loadCallback.onLoadPreviousPageStart(extra);
+        }
         loadPreviousPageInternal(first,extra);
     }
 
@@ -126,6 +132,9 @@ public abstract class PageLoader<T> {
     public void loadNextPage(Bundle extra) {
         if (last == null) {
             return;
+        }
+        if (loadCallback != null) {
+            loadCallback.onLoadNextPageStart(extra);
         }
         loadNextPageInternal(last,extra);
     }
@@ -178,17 +187,23 @@ public abstract class PageLoader<T> {
 
     public interface Callback<T> {
 
+        void onLoadFirstPageStart(@Nullable Bundle extra);
+
         void onLoadFirstPageSuccess(@NonNull T t, @Nullable Bundle extra);
 
         void onLoadFirstPageFail(Throwable e,@Nullable Bundle extra);
 
         void onLoadFirstPageComplete(@Nullable Bundle extra);
 
+        void onLoadNextPageStart(@Nullable Bundle extra);
+
         void onLoadNextPageSuccess(@NonNull T t,@Nullable Bundle extra);
 
         void onLoadNextPageFail(Throwable e,@Nullable Bundle extra);
 
         void onLoadNextPageComplete(@Nullable Bundle extra);
+
+        void onLoadPreviousPageStart(@Nullable Bundle extra);
 
         void onLoadPreviousPageSuccess(@NonNull T t,@Nullable Bundle extra);
 
