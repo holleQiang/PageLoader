@@ -37,7 +37,7 @@ public class PageLoadHelper<T> {
             previousLoadWidget.setCallback(new LoadWidget.Callback() {
                 @Override
                 public void onLoadPage() {
-                    mPageLoader.loadFirstPage(null);
+                    mPageLoader.loadPreviousPage(null);
                 }
             });
         }
