@@ -7,7 +7,7 @@ public abstract class RVLoadWidget extends LoadWidget {
 
     private RecyclerView recyclerView;
     private boolean isLoading;
-    private boolean isEnable;
+    private boolean isEnable = true;
 
     public RVLoadWidget(RecyclerView recyclerView) {
         this.recyclerView = recyclerView;

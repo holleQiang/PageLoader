@@ -29,7 +29,7 @@ public class PrevRVLoadWidget extends RVLoadWidget {
 
     private int findFirstVisibleItemPosition(RecyclerView.LayoutManager layoutManager) {
         if (layoutManager instanceof LinearLayoutManager) {
-            return ((GridLayoutManager) layoutManager).findFirstVisibleItemPosition();
+            return ((LinearLayoutManager) layoutManager).findFirstVisibleItemPosition();
         }else if(layoutManager instanceof StaggeredGridLayoutManager){
             int[] positions = new int[((StaggeredGridLayoutManager) layoutManager).getSpanCount()];
             ((StaggeredGridLayoutManager) layoutManager).findFirstVisibleItemPositions(positions);
