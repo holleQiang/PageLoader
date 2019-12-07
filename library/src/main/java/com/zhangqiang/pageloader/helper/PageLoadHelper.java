@@ -17,37 +17,43 @@ public class PageLoadHelper<T> {
     private static final String EXTRA_KEY_AUTO_LOAD_FIRST_PAGE = "auto_load_first_page";
     private Callback<T> callback;
 
-    public PageLoadHelper(final LoadWidget firstLoadWidget,
-                          final LoadWidget previousLoadWidget,
-                          final LoadWidget nextLoadWidget,
+    public PageLoadHelper(@Nullable final LoadWidget firstLoadWidget,
+                          @Nullable final LoadWidget previousLoadWidget,
+                          @Nullable final LoadWidget nextLoadWidget,
                           DataSource<T> dataSource) {
         this.firstLoadWidget = firstLoadWidget;
         this.previousLoadWidget = previousLoadWidget;
         this.nextLoadWidget = nextLoadWidget;
         this.dataSource = dataSource;
-        firstLoadWidget.setCallback(new LoadWidget.Callback() {
-            @Override
-            public void onLoadPage() {
-                mPageLoader.loadFirstPage(null);
-            }
-        });
-        previousLoadWidget.setCallback(new LoadWidget.Callback() {
-            @Override
-            public void onLoadPage() {
-                mPageLoader.loadFirstPage(null);
-            }
-        });
-        nextLoadWidget.setCallback(new LoadWidget.Callback() {
-            @Override
-            public void onLoadPage() {
-                mPageLoader.loadNextPage(null);
-            }
-        });
+        if (firstLoadWidget != null) {
+            firstLoadWidget.setCallback(new LoadWidget.Callback() {
+                @Override
+                public void onLoadPage() {
+                    mPageLoader.loadFirstPage(null);
+                }
+            });
+        }
+        if (previousLoadWidget != null) {
+            previousLoadWidget.setCallback(new LoadWidget.Callback() {
+                @Override
+                public void onLoadPage() {
+                    mPageLoader.loadFirstPage(null);
+                }
+            });
+        }
+        if (nextLoadWidget != null) {
+            nextLoadWidget.setCallback(new LoadWidget.Callback() {
+                @Override
+                public void onLoadPage() {
+                    mPageLoader.loadNextPage(null);
+                }
+            });
+        }
         mPageLoader.setCallback(new PageLoader.Callback<T>() {
             @Override
             public void onLoadFirstPageStart(@Nullable Bundle extra) {
                 if (callback != null) {
-                    callback.onLoadFirstPageStart(extra,isAutoLoadFromExtra(extra));
+                    callback.onLoadFirstPageStart(extra, isAutoLoadFromExtra(extra));
                 }
             }
 
@@ -56,7 +62,9 @@ public class PageLoadHelper<T> {
                 if (callback != null) {
                     callback.onLoadFirstPageSuccess(t, extra, isAutoLoadFromExtra(extra));
                 }
-                firstLoadWidget.setLoadSuccess();
+                if (firstLoadWidget != null) {
+                    firstLoadWidget.setLoadSuccess();
+                }
             }
 
             @Override
@@ -64,7 +72,9 @@ public class PageLoadHelper<T> {
                 if (callback != null) {
                     callback.onLoadFirstPageFail(e, extra, isAutoLoadFromExtra(extra));
                 }
-                firstLoadWidget.setLoadFail(e);
+                if (firstLoadWidget != null) {
+                    firstLoadWidget.setLoadFail(e);
+                }
             }
 
             @Override
@@ -72,7 +82,9 @@ public class PageLoadHelper<T> {
                 if (callback != null) {
                     callback.onLoadFirstPageComplete(extra, isAutoLoadFromExtra(extra));
                 }
-                firstLoadWidget.setLoadComplete();
+                if (firstLoadWidget != null) {
+                    firstLoadWidget.setLoadComplete();
+                }
             }
 
             @Override
@@ -87,7 +99,9 @@ public class PageLoadHelper<T> {
                 if (callback != null) {
                     callback.onLoadNextPageSuccess(t, extra);
                 }
-                nextLoadWidget.setLoadSuccess();
+                if (nextLoadWidget != null) {
+                    nextLoadWidget.setLoadSuccess();
+                }
             }
 
             @Override
@@ -95,7 +109,9 @@ public class PageLoadHelper<T> {
                 if (callback != null) {
                     callback.onLoadNextPageFail(e, extra);
                 }
-                nextLoadWidget.setLoadFail(e);
+                if (nextLoadWidget != null) {
+                    nextLoadWidget.setLoadFail(e);
+                }
             }
 
             @Override
@@ -103,7 +119,9 @@ public class PageLoadHelper<T> {
                 if (callback != null) {
                     callback.onLoadNextPageComplete(extra);
                 }
-                nextLoadWidget.setLoadComplete();
+                if (nextLoadWidget != null) {
+                    nextLoadWidget.setLoadComplete();
+                }
             }
 
             @Override
@@ -118,7 +136,9 @@ public class PageLoadHelper<T> {
                 if (callback != null) {
                     callback.onLoadPreviousPageSuccess(t, extra);
                 }
-                previousLoadWidget.setLoadSuccess();
+                if (previousLoadWidget != null) {
+                    previousLoadWidget.setLoadSuccess();
+                }
             }
 
             @Override
@@ -126,7 +146,9 @@ public class PageLoadHelper<T> {
                 if (callback != null) {
                     callback.onLoadPreviousPageFail(e, extra);
                 }
-                previousLoadWidget.setLoadFail(e);
+                if (previousLoadWidget != null) {
+                    previousLoadWidget.setLoadFail(e);
+                }
             }
 
             @Override
@@ -134,7 +156,9 @@ public class PageLoadHelper<T> {
                 if (callback != null) {
                     callback.onLoadPreviousPageComplete(extra);
                 }
-                previousLoadWidget.setLoadComplete();
+                if (previousLoadWidget != null) {
+                    previousLoadWidget.setLoadComplete();
+                }
             }
         });
     }
@@ -161,10 +185,18 @@ public class PageLoadHelper<T> {
 
     public void autoLoadFirstPage(Bundle extra) {
 
-        if (extra != null) {
-            extra.putBoolean(EXTRA_KEY_AUTO_LOAD_FIRST_PAGE, true);
+        Bundle bundle;
+        if (extra == null) {
+            bundle = new Bundle();
+        } else {
+            bundle = extra;
         }
-        mPageLoader.loadFirstPage(extra);
+        bundle.putBoolean(EXTRA_KEY_AUTO_LOAD_FIRST_PAGE, true);
+        mPageLoader.loadFirstPage(bundle);
+    }
+
+    public void autoLoadFirstPage() {
+        autoLoadFirstPage(null);
     }
 
     private boolean isAutoLoadFromExtra(Bundle extra) {
